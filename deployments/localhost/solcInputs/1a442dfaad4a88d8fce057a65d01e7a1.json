@@ -1,0 +1,41 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\ninterface AggregatorV3Interface {\n  function decimals() external view returns (uint8);\n\n  function description() external view returns (string memory);\n\n  function version() external view returns (uint256);\n\n  function getRoundData(uint80 _roundId)\n    external\n    view\n    returns (\n      uint80 roundId,\n      int256 answer,\n      uint256 startedAt,\n      uint256 updatedAt,\n      uint80 answeredInRound\n    );\n\n  function latestRoundData()\n    external\n    view\n    returns (\n      uint80 roundId,\n      int256 answer,\n      uint256 startedAt,\n      uint256 updatedAt,\n      uint80 answeredInRound\n    );\n}\n"
+    },
+    "contracts/FuneMe.sol": {
+      "content": "//SPDX-License-Identifier:MIT\r\npragma solidity ^0.8.0;\r\nimport \"./PriceConvertor.sol\";\r\n\r\nerror FundMe__NotOwner(); //write the name of the contract before the error can help us to identify from where the error has generated\r\n\r\ncontract FundMe {\r\n    using PriceConvertor for uint256;\r\n\r\n    uint256 public constant MINIUSD = 50 * 10 ** 18;\r\n    address[] private funders;\r\n    mapping(address => uint256) private addressToAmount;\r\n    address private immutable i_owner; // write the immutable variable starting with i_\r\n\r\n    AggregatorV3Interface priceFeed;\r\n\r\n    modifier onlyOwner() {\r\n        if (msg.sender != i_owner) revert FundMe__NotOwner();\r\n        _;\r\n    }\r\n\r\n    constructor(address _address) {\r\n        i_owner = msg.sender;\r\n        priceFeed = AggregatorV3Interface(_address);\r\n    }\r\n\r\n    function fund() public payable {\r\n        require(\r\n            msg.value.getConversionPrice(priceFeed) > MINIUSD,\r\n            \"Please enter sufficient amount\"\r\n        );\r\n        //address 0xA39434A63A52E749F02807ae27335515BA4b07F7\r\n        funders.push(msg.sender);\r\n        addressToAmount[msg.sender] = msg.value;\r\n    }\r\n\r\n    function withdraw() public onlyOwner {\r\n        for (uint256 i = 0; i < funders.length; i++) {\r\n            addressToAmount[funders[i]] = 0;\r\n        }\r\n        funders = new address[](0);\r\n        (bool success, ) = payable(i_owner).call{value: address(this).balance}(\r\n            \"\"\r\n        );\r\n        require(success, \"call failed\");\r\n    }\r\n\r\n    function getAddressToAmountFunded(\r\n        address fundingAddress\r\n    ) public view returns (uint256) {\r\n        return addressToAmount[fundingAddress];\r\n    }\r\n\r\n    function getVersion() public view returns (uint256) {\r\n        return priceFeed.version();\r\n    }\r\n\r\n    function getFunder(uint256 index) public view returns (address) {\r\n        return funders[index];\r\n    }\r\n\r\n    function getOwner() public view returns (address) {\r\n        return i_owner;\r\n    }\r\n\r\n    function getPriceFeed() public view returns (AggregatorV3Interface) {\r\n        return priceFeed;\r\n    }\r\n\r\n    fallback() external payable {\r\n        fund();\r\n    }\r\n\r\n    receive() external payable {\r\n        fund();\r\n    }\r\n}\r\n"
+    },
+    "contracts/PriceConvertor.sol": {
+      "content": "//SPDX-License-Identifier:MIT\r\npragma solidity ^0.8.0;\r\nimport \"@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol\";\r\n\r\nlibrary PriceConvertor {\r\n    function getPrice(\r\n        AggregatorV3Interface priceFeed\r\n    ) internal view returns (uint256) {\r\n        // AggregatorV3Interface priceFeed = AggregatorV3Interface(\r\n        //     0xA39434A63A52E749F02807ae27335515BA4b07F7\r\n        // );\r\n        (, int256 answer, , , ) = priceFeed.latestRoundData();\r\n        return uint256(answer * 1e10);\r\n    }\r\n\r\n    function getConversionPrice(\r\n        uint256 ethAmount,\r\n        AggregatorV3Interface priceFeed\r\n    ) internal view returns (uint256) {\r\n        uint256 ethPrice = getPrice(priceFeed);\r\n        uint256 ethAmountInUsd = (ethPrice * ethAmount) / 1e18;\r\n        return ethAmountInUsd;\r\n    }\r\n}\r\n"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": false,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}

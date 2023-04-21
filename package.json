@@ -1,0 +1,16 @@
+{
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",
+    "@nomiclabs/hardhat-waffle": "^2.0.3",
+    "chai": "^4.3.7",
+    "ethereum-waffle": "^3.4.4",
+    "ethers": "^5.7.2",
+    "hardhat": "^2.13.0"
+  },
+  "dependencies": {
+    "@chainlink/contracts": "^0.6.1",
+    "dotenv": "^16.0.3",
+    "hardhat-deploy": "^0.11.25",
+    "solidity-coverage": "^0.8.2"
+  }
+}
